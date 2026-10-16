@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="primefaces">
+<f:view contentType="text/html;charset=UTF-8" encoding="UTF-8">
+    <h:head><title>DataTable bulk selection benchmark</title></h:head>
+    <h:body>
+        <h:form id="form">
+            <p:dataTable id="datatable" widgetVar="perfTable" value="#{dataTable058.rows}" var="row"
+                         rowKey="#{row}" selection="#{dataTable058.selection}" selectionMode="multiple"
+                         selectionPageOnly="#{param.all ne 'true'}" nativeElements="#{param.native eq 'true'}">
+                <p:column selectionMode="multiple" style="width:3rem"/>
+                <p:column headerText="Row"><h:outputText value="#{row}"/></p:column>
+            </p:dataTable>
+        </h:form>
+    </h:body>
+</f:view>
+</html>

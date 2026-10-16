@@ -1,0 +1,13 @@
+{
+  "name": "primefaces-browser-selection",
+  "version": "1.0.0",
+  "scripts": {
+    "profile": "node profile-selection.mjs"
+  },
+  "license": "MIT",
+  "description": "Reproducible DataTable selection browser profiling",
+  "dependencies": {
+    "playwright": "1.64.1"
+  },
+  "private": true
+}

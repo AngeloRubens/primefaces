@@ -1,0 +1,61 @@
+name: DataTable browser selection profile
+
+on:
+  push:
+    branches: [perf/datatable-selection]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Build fixture and dependencies
+        run: mvn -B -ntp -pl primefaces-integration-tests -am install -DskipTests -Pmojarra-4.0 -Dmaven.javadoc.skip=true -Djsdoc.skip.typedoc=true
+      - name: Install browser
+        working-directory: scripts/browser-selection
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Check selection behavior
+        run: mvn -B -ntp -f primefaces-integration-tests/pom.xml verify -Pintegration-tests,headless,chrome,mojarra-4.0 -Dgroups=DataTable-selection
+      - name: Profile selection
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          mkdir -p scripts/browser-selection/results
+          mvn -B -ntp -f primefaces-integration-tests/pom.xml jetty:run -Pmojarra-4.0 > scripts/browser-selection/results/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 120); do
+            if curl --fail --silent http://127.0.0.1:8080/datatable/dataTable058.xhtml?rows=100 > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          "$ready"
+          for rows in 100 500 2000; do
+            for mode in api header; do
+              MODE=$mode node scripts/browser-selection/profile-selection.mjs \
+                "http://127.0.0.1:8080/datatable/dataTable058.xhtml?rows=$rows" perfTable \
+                "scripts/browser-selection/results/$mode-$rows"
+            done
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: browser-selection-${{ github.sha }}
+          path: |
+            scripts/browser-selection/results
+            primefaces-integration-tests/target/failsafe-reports
