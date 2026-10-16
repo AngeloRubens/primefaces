@@ -1,6 +1,7 @@
 // Requires Playwright and a locally served PrimeFaces fixture. See README.md.
 import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 
 const [url, widgetVar, output = 'browser-results'] = process.argv.slice(2);
 if (!url || !widgetVar) throw new Error('Usage: node profile-selection.mjs URL WIDGET_VAR [OUTPUT]');
@@ -13,9 +14,22 @@ const browser = await chromium.launch();
 try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors = [];
+    let bundleRequests = 0;
+    let bundleSha256 = null;
+    if (process.env.COMPONENTS_BUNDLE) {
+        const bundle = await readFile(process.env.COMPONENTS_BUNDLE);
+        bundleSha256 = createHash('sha256').update(bundle).digest('hex');
+        await page.route(url => url.pathname.includes('/components.js'), async route => {
+            bundleRequests++;
+            await route.fulfill({ body: bundle, contentType: 'application/javascript' });
+        });
+    }
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(url, { waitUntil: 'networkidle' });
     await page.waitForFunction(name => Boolean(window.PrimeFaces?.widgets?.[name]), widgetVar);
+    if (process.env.COMPONENTS_BUNDLE && bundleRequests !== 1) {
+        throw new Error(`Expected one components bundle request, received ${bundleRequests}`);
+    }
     const fixture = await page.evaluate(name => {
         const w = PF(name);
         if (w.hasBehavior('rowSelect') || w.hasBehavior('rowUnselect')) {
@@ -96,7 +110,7 @@ try {
     };
     const result = {
         url, widgetVar, mode, fixture, browser: browser.version(), node: process.version,
-        sourceCommit: process.env.SOURCE_COMMIT ?? null,
+        sourceCommit: process.env.SOURCE_COMMIT ?? null, bundleSha256,
         samples, writesPerCycle, timings,
         selectMedianMs: percentile('selectMs', 0.5), selectP95Ms: percentile('selectMs', 0.95),
         unselectMedianMs: percentile('unselectMs', 0.5),

@@ -338,6 +338,18 @@
 
     <profiles>
         <profile>
+            <id>browser-selection</id>
+            <dependencies>
+                <!-- Jetty does not provide the JPA API used by the shared CDI beans. -->
+                <dependency>
+                    <groupId>jakarta.persistence</groupId>
+                    <artifactId>jakarta.persistence-api</artifactId>
+                    <version>${jakarta.persistence-api.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>parallel-execution</id>
             <properties>
                 <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>

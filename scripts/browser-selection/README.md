@@ -10,7 +10,7 @@ Build and serve from the repository root:
 
 ```sh
 mvn -B -ntp -pl primefaces-integration-tests -am install -DskipTests -Pmojarra-4.0
-mvn -B -ntp -f primefaces-integration-tests/pom.xml jetty:run -Pmojarra-4.0
+mvn -B -ntp -f primefaces-integration-tests/pom.xml jetty:run -Pmojarra-4.0,browser-selection
 ```
 
 In another terminal:

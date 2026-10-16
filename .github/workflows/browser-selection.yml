@@ -33,7 +33,7 @@ jobs:
           SOURCE_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p scripts/browser-selection/results
-          mvn -B -ntp -f primefaces-integration-tests/pom.xml jetty:run -Pmojarra-4.0 > scripts/browser-selection/results/server.log 2>&1 &
+          mvn -B -ntp -f primefaces-integration-tests/pom.xml jetty:run -Pmojarra-4.0,browser-selection > scripts/browser-selection/results/server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           ready=false

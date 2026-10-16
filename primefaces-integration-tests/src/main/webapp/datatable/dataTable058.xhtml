@@ -9,7 +9,7 @@
         <h:form id="form">
             <p:dataTable id="datatable" widgetVar="perfTable" value="#{dataTable058.rows}" var="row"
                          rowKey="#{row}" selection="#{dataTable058.selection}" selectionMode="multiple"
-                         selectionPageOnly="#{param.all ne 'true'}" nativeElements="#{param.native eq 'true'}">
+                         selectionPageOnly="#{param.all ne 'true'}" nativeElements="#{param['native'] eq 'true'}">
                 <p:column selectionMode="multiple" style="width:3rem"/>
                 <p:column headerText="Row"><h:outputText value="#{row}"/></p:column>
             </p:dataTable>
